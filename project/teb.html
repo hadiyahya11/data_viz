@@ -11,9 +11,6 @@ body {
 .radar-chart .axis .legend.left {
   text-anchor: end;
 }
-.radar-chart .axis .legend.middle {
-  text-anchor: middle;
-}
 .radar-chart .axis .legend.right {
   text-anchor: start;
 }
@@ -82,6 +79,8 @@ d3.csv("/desktop/out.csv", function(x) {
             })
     }
 });
+
+
 
 
 var chart = RadarChart.chart();

@@ -3,29 +3,63 @@
         <body>
         </body>
         <script>
-            let data = [];
-            let features = ["A","B","C","D","E","F"];
-            //generate the data
-            for (var i = 0; i < 3; i++){
-                var point = {}
-                //each feature will be a random number from 1-9
-                features.forEach(f => point[f] = 1 + Math.random() * 8);
-                data.push(point);
+            var data = [];
+            var average = {
+                    Deviations: 0.204274,
+                    EmotionCount:0.158571,
+                    NumberWord: 0.180199,
+                    SucRate:0.442462,
+                    Time2ans: 0.230278
             }
-            console.log(data);
+            data.push(average);
+                
+
+            let features = [];
+            d3.csv("norm_out.csv").then(function(csv) {
+                  csv.map(function(x){
+                    x.forEach(function(d){
+                  d.Deviations= +d.Deviations;
+                  d.EmotionCount= +d.EmotionCount;
+                  d.NumberWord= +d.NumberWord;
+                  d.SucRate= +d.SucRate;
+                  d.Time2ans= +d.Time2ans;
+                })
+                  for (var i = 0; i < 2; i++){
+                    data.push(d[i])
+                }
+                })
+                /*x.forEach(function(d){
+                  d.Deviations= +d.Deviations;
+                  d.EmotionCount= +d.EmotionCount;
+                  d.NumberWord= +d.NumberWord;
+                  d.SucRate= +d.SucRate;
+                  d.Time2ans= +d.Time2ans;
+                });
+
+                for (var i = 0; i < 2; i++){
+                    console.log(x[i])
+                    data.push(x[i])
+                }*/
+            });
+            console.log(data)
+            features = Object.keys(data[0])
+            console.log(features)
+            console.log(data)
 
 
             let svg = d3.select("body").append("svg")
-                        .attr("width", 600)
-                        .attr("height", 600);
+                        .attr("width", 700)
+                        .attr("height", 700);
 
             let radialScale = d3.scaleLinear()
-                            .domain([0,10])
-                             .range([0,250]);
-            let ticks = [2,4,6,8,10];
+                            .domain([0,1])
+                            .range([0,250]);
 
 
+            let ticks = [0.2,0.4,0.6,0.8,1];
 
+
+//circles for the radar
             ticks.forEach(t =>
                  svg.append("circle")
                      .attr("cx", 300)
@@ -35,6 +69,7 @@
                       .attr("r", radialScale(t))
                     );
 
+                    //labels
                     ticks.forEach(t =>
     svg.append("text")
     .attr("x", 305)
@@ -48,11 +83,14 @@ function angleToCoordinate(angle, value){
     return {"x": 300 + x, "y": 300 - y};
 }
 
+
+//draw text and label
+
 for (var i = 0; i < features.length; i++) {
     let ft_name = features[i];
     let angle = (Math.PI / 2) + (2 * Math.PI * i / features.length);
-    let line_coordinate = angleToCoordinate(angle, 10);
-    let label_coordinate = angleToCoordinate(angle, 10.5);
+    let line_coordinate = angleToCoordinate(angle, 1);
+    let label_coordinate = angleToCoordinate(angle, 1.05);
 
     //draw axis line
     svg.append("line")
@@ -70,10 +108,11 @@ for (var i = 0; i < features.length; i++) {
 }
 
 
-                    let line = d3.line()
+    let line = d3.line()
     .x(d => d.x)
     .y(d => d.y);
 let colors = ["darkorange", "gray", "navy"];
+
 
 function getPathCoordinates(data_point){
     let coordinates = [];
@@ -85,7 +124,10 @@ function getPathCoordinates(data_point){
     return coordinates;
 }
 
+
 for (var i = 0; i < data.length; i ++){
+    console.log(data.length)
+   // console.log(data[i])
     let d = data[i];
     let color = colors[i];
     let coordinates = getPathCoordinates(d);
@@ -101,6 +143,5 @@ for (var i = 0; i < data.length; i ++){
     .attr("opacity", 0.5);
 }
 
-
-        </script>
-    </html>
+</script>
+</html>
