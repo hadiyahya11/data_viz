@@ -11,40 +11,26 @@
                     SucRate:0.442462,
                     Time2ans: 0.230278
             }
-            data.push(average);
-                
-
+           data.push(average);
             let features = [];
-            d3.csv("norm_out.csv").then(function(csv) {
-                  csv.map(function(x){
-                    x.forEach(function(d){
-                  d.Deviations= +d.Deviations;
-                  d.EmotionCount= +d.EmotionCount;
-                  d.NumberWord= +d.NumberWord;
-                  d.SucRate= +d.SucRate;
-                  d.Time2ans= +d.Time2ans;
-                })
-                  for (var i = 0; i < 2; i++){
-                    data.push(d[i])
-                }
-                })
-                /*x.forEach(function(d){
-                  d.Deviations= +d.Deviations;
-                  d.EmotionCount= +d.EmotionCount;
-                  d.NumberWord= +d.NumberWord;
-                  d.SucRate= +d.SucRate;
-                  d.Time2ans= +d.Time2ans;
-                });
 
-                for (var i = 0; i < 2; i++){
-                    console.log(x[i])
-                    data.push(x[i])
-                }*/
+            d3.csv("norm_out.csv").then(function(x) {
+
+                x.forEach(function(d){
+                  d.Deviations= +d.Deviations;
+                  d.EmotionCount= +d.EmotionCount;
+                  d.NumberWord= +d.NumberWord;
+                  d.SucRate= +d.SucRate;
+                  d.Time2ans= +d.Time2ans;
+                  data.push(d)
+                });
+                
             });
+
+           
             console.log(data)
+            console.log(data.length)
             features = Object.keys(data[0])
-            console.log(features)
-            console.log(data)
 
 
             let svg = d3.select("body").append("svg")
