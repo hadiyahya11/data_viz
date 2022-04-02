@@ -1,133 +1,193 @@
-    <!DOCTYPE html>
-        <script src="https://d3js.org/d3.v7.min.js"></script>
-        <body>
-        </body>
-        <script>
-            var data = [];
-            var average = {
-                    Deviations: 0.204274,
-                    EmotionCount:0.158571,
-                    NumberWord: 0.180199,
-                    SucRate:0.442462,
-                    Time2ans: 0.230278
+<!DOCTYPE html>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<body>
+</body>
+<script>
+
+    d3.csv("norm_out.csv").then(function (x) {
+
+        var data = [];
+        var temp = [];
+
+        let features = [];
+        x.forEach(function (d) {
+            d.Deviations = +d.Deviations;
+            d.EmotionCount = +d.EmotionCount;
+            d.NumberWord = +d.NumberWord;
+            d.SucRate = +d.SucRate;
+            d.Time2ans = +d.Time2ans;
+            temp.push(d);
+
+        });
+
+        var average = {
+            Deviations: d3.mean(temp, d => d.Deviations),
+            EmotionCount: d3.mean(temp, d => d.EmotionCount),
+            NumberWord: d3.mean(temp, d => d.NumberWord),
+            SucRate: d3.mean(temp, d => d.SucRate),
+            Time2ans: d3.mean(temp, d => d.Time2ans)
+        }
+        console.log(average)
+        data.push(average);
+
+        for (var i = 0; i < 2; ++i) {
+            data.push(x[i]);
+        }
+
+        //console.log(data)
+        features = Object.keys(data[0])
+
+
+        let svg = d3.select("body").append("svg")
+            .attr("width", 800)
+            .attr("height", 800);
+
+
+
+        //convert the scale from [0,1] to pixels
+        let radialScale = d3.scaleLinear()
+            .domain([0, 1])
+            .range([0, 250]);
+
+
+        let ticks = [0.2, 0.4, 0.6, 0.8, 1];
+
+
+        //circles for the radar
+        ticks.forEach(t =>
+            svg.append("circle")
+                .attr("cx", 300)
+                .attr("cy", 300)
+                .attr("fill", "none")
+                .attr("stroke", "gray")
+                .attr("r", radialScale(t))
+        );
+
+        //labels
+        ticks.forEach(t =>
+            svg.append("text")
+                .attr("x", 305)
+                .attr("y", 300 - radialScale(t))
+                .text(t.toString())
+        );
+
+        function angleToCoordinate(angle, value) {
+            let x = Math.cos(angle) * radialScale(value);
+            let y = Math.sin(angle) * radialScale(value);
+            return { "x": 300 + x, "y": 300 - y };
+        }
+
+
+        //draw text and label
+        for (var i = 0; i < features.length; i++) {
+            let ft_name = features[i];
+            let angle = (Math.PI / 2) + (2 * Math.PI * i / features.length);
+            let line_coordinate = angleToCoordinate(angle, 1);
+            let label_coordinate = angleToCoordinate(angle, 1.05);
+
+            //draw axis line
+            svg.append("line")
+                .attr("x1", 300)
+                .attr("y1", 300)
+                .attr("x2", line_coordinate.x)
+                .attr("y2", line_coordinate.y)
+                .attr("stroke", "black");
+
+            //draw axis label
+            svg.append("text")
+                .attr("x", label_coordinate.x)
+                .attr("y", label_coordinate.y)
+                .text(ft_name);
+        }
+
+
+        let line = d3.line()
+            .x(d => d.x)
+            .y(d => d.y);
+        let colors = ["darkorange", "gray", "navy"];
+
+
+        function getPathCoordinates(data_point) {
+            let coordinates = [];
+            for (var i = 0; i < features.length; i++) {
+                let ft_name = features[i];
+                let angle = (Math.PI / 2) + (2 * Math.PI * i / features.length);
+                coordinates.push(angleToCoordinate(angle, data_point[ft_name]));
             }
-           data.push(average);
-            let features = [];
+            return coordinates;
+        }
 
-            d3.csv("norm_out.csv").then(function(x) {
+        var g = svg.append("g")
+            .attr("transform", "translate(" + 100 + "," + 100 + ")")
+            .attr("html", "true");
+        let tooltips1 = [];
 
-                x.forEach(function(d){
-                  d.Deviations= +d.Deviations;
-                  d.EmotionCount= +d.EmotionCount;
-                  d.NumberWord= +d.NumberWord;
-                  d.SucRate= +d.SucRate;
-                  d.Time2ans= +d.Time2ans;
-                  data.push(d)
+        for (var i = 0; i < features.length; i++) {
+            var tooltip = g.append("text")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+
+            tooltips1.push(tooltip);
+        }
+
+        for (var i = 0; i < data.length; i++) {
+
+            let d = data[i];
+            let color = colors[i];
+            let coordinates = getPathCoordinates(d);
+
+            //draw the path element
+            svg.append("path")
+                .datum(coordinates)
+                .attr("d", line)
+                .attr("stroke-width", 3)
+                .attr("stroke", color)
+                .attr("fill", color)
+                .attr("stroke-opacity", 1)
+                .attr("opacity", 0.5)
+                .on('mouseover', function (da, i) {
+                    //Dim all blobs
+                    d3.selectAll(".radarArea")
+                        .transition().duration(200)
+                        .style("opacity", 0.5);
+                    //Bring back the hovered over blob
+                    d3.select(this)
+                        .transition().duration(200)
+                        .style("opacity", 0.8);
+                    da = d;
+                    for (var i = 0; i < features.length; i++) {
+                        tooltips1[i]
+                            .attr('x', 420)
+                            .attr('y', 1 + (i * 20))
+                            .text(features[i] + " : " + Object.values(da)[i])
+                            .transition().duration(200)
+                            .style('opacity', 1);
+                    }
+                    console.log(da.length);
+                    console.log(da);
+
+                })
+                .on('mouseout', function () {
+                    //Bring back all blobs
+                    d3.selectAll(".radarArea")
+                        .transition().duration(200)
+                        .style("opacity", 0.35);
+                    d3.select(this)
+                        .transition().duration(200)
+                        .style("opacity", 0.35);
+                    for (var i = 0; i < features.length; i++) {
+                        tooltips1[i].transition().duration(200)
+                            .style("opacity", 0);
+                    }
+
                 });
-                
-            });
+        }
 
-           
-            console.log(data)
-            console.log(data.length)
-            features = Object.keys(data[0])
+    });
 
 
-            let svg = d3.select("body").append("svg")
-                        .attr("width", 700)
-                        .attr("height", 700);
-
-            let radialScale = d3.scaleLinear()
-                            .domain([0,1])
-                            .range([0,250]);
-
-
-            let ticks = [0.2,0.4,0.6,0.8,1];
-
-
-//circles for the radar
-            ticks.forEach(t =>
-                 svg.append("circle")
-                     .attr("cx", 300)
-                     .attr("cy", 300)
-                     .attr("fill", "none")
-                     .attr("stroke", "gray")
-                      .attr("r", radialScale(t))
-                    );
-
-                    //labels
-                    ticks.forEach(t =>
-    svg.append("text")
-    .attr("x", 305)
-    .attr("y", 300 - radialScale(t))
-    .text(t.toString())
-);
-
-function angleToCoordinate(angle, value){
-    let x = Math.cos(angle) * radialScale(value);
-    let y = Math.sin(angle) * radialScale(value);
-    return {"x": 300 + x, "y": 300 - y};
-}
-
-
-//draw text and label
-
-for (var i = 0; i < features.length; i++) {
-    let ft_name = features[i];
-    let angle = (Math.PI / 2) + (2 * Math.PI * i / features.length);
-    let line_coordinate = angleToCoordinate(angle, 1);
-    let label_coordinate = angleToCoordinate(angle, 1.05);
-
-    //draw axis line
-    svg.append("line")
-    .attr("x1", 300)
-    .attr("y1", 300)
-    .attr("x2", line_coordinate.x)
-    .attr("y2", line_coordinate.y)
-    .attr("stroke","black");
-
-    //draw axis label
-    svg.append("text")
-    .attr("x", label_coordinate.x)
-    .attr("y", label_coordinate.y)
-    .text(ft_name);
-}
-
-
-    let line = d3.line()
-    .x(d => d.x)
-    .y(d => d.y);
-let colors = ["darkorange", "gray", "navy"];
-
-
-function getPathCoordinates(data_point){
-    let coordinates = [];
-    for (var i = 0; i < features.length; i++){
-        let ft_name = features[i];
-        let angle = (Math.PI / 2) + (2 * Math.PI * i / features.length);
-        coordinates.push(angleToCoordinate(angle, data_point[ft_name]));
-    }
-    return coordinates;
-}
-
-
-for (var i = 0; i < data.length; i ++){
-    console.log(data.length)
-   // console.log(data[i])
-    let d = data[i];
-    let color = colors[i];
-    let coordinates = getPathCoordinates(d);
-
-    //draw the path element
-    svg.append("path")
-    .datum(coordinates)
-    .attr("d",line)
-    .attr("stroke-width", 3)
-    .attr("stroke", color)
-    .attr("fill", color)
-    .attr("stroke-opacity", 1)
-    .attr("opacity", 0.5);
-}
 
 </script>
+
 </html>
