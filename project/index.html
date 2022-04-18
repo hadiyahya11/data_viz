@@ -5,37 +5,113 @@
 </body>
 <script>
 
-    d3.csv("norm_out.csv").then(function (x) {
+    d3.csv("clean_data_out.csv").then(function (x) {
 
+        //array that holds the normalized dataset
         var data = [];
+
+        //array that holds the actual values
         var temp = [];
 
+        var temp2 =[];
+
+        //columns names
         let features = [];
+
+        var length = x.length
+        console.log(length)
+
+        //convert strings into numbers
         x.forEach(function (d) {
             d.Deviations = +d.Deviations;
             d.EmotionCount = +d.EmotionCount;
             d.NumberWord = +d.NumberWord;
             d.SucRate = +d.SucRate;
             d.Time2ans = +d.Time2ans;
-            temp.push(d);
+            //temp.push(d);
 
         });
-
-        var average = {
-            Deviations: d3.mean(temp, d => d.Deviations),
-            EmotionCount: d3.mean(temp, d => d.EmotionCount),
-            NumberWord: d3.mean(temp, d => d.NumberWord),
-            SucRate: d3.mean(temp, d => d.SucRate),
-            Time2ans: d3.mean(temp, d => d.Time2ans)
+        //console.log(temp)
+        var max = {
+            Deviations: d3.max(x, d => d.Deviations),
+            EmotionCount: d3.max(x, d => d.EmotionCount),
+            NumberWord: d3.max(x, d => d.NumberWord),
+            SucRate: d3.max(x, d => d.SucRate),
+            Time2ans: d3.max(x, d => d.Time2ans)
         }
-        console.log(average)
-        data.push(average);
+
+        var min = {
+            Deviations: d3.min(x, d => d.Deviations),
+            EmotionCount: d3.min(x, d => d.EmotionCount),
+            NumberWord: d3.min(x, d => d.NumberWord),
+            SucRate: d3.min(x, d => d.SucRate),
+            Time2ans: d3.min(x, d => d.Time2ans)
+        }
+        //console.log(x[0])
+        console.log(min)
+        console.log(max)
+
+        /*x.forEach(function(d){
+            d.Deviations = (d.Deviations - min.Deviations)/(max.Deviations - min.Deviations)
+            d.EmotionCount = (d.EmotionCount - min.EmotionCount)/(max.EmotionCount - min.EmotionCount)
+            d.NumberWord = (d.NumberWord - min.NumberWord)/(max.NumberWord - min.NumberWord)
+            d.Time2ans = (d.Time2ans - min.Time2ans)/(max.Time2ans - min.Time2ans)
+            d.SucRate = (d.SucRate - min.SucRate)/(max.SucRate - min.SucRate)
+            temp2.push(d);
+        });*/
+        
+
+        //compute average
+        var average = {
+            Deviations: d3.mean(x, d => d.Deviations).toFixed(5),
+            EmotionCount: d3.mean(x, d => d.EmotionCount).toFixed(5),
+            NumberWord: d3.mean(x, d => d.NumberWord).toFixed(5),
+            SucRate: d3.mean(x, d => d.SucRate).toFixed(5),
+            Time2ans: d3.mean(x, d => d.Time2ans).toFixed(5)
+        }
+        temp.push(average)
+        console.log(temp)
+
+        //min_max normalization
+        for(var i = 0; i< length;++i){
+            var d = JSON.parse(JSON.stringify(x[i]))
+            d.Deviations = (d.Deviations - min.Deviations)/(max.Deviations - min.Deviations)
+            d.EmotionCount = (d.EmotionCount - min.EmotionCount)/(max.EmotionCount - min.EmotionCount)
+            d.NumberWord = (d.NumberWord - min.NumberWord)/(max.NumberWord - min.NumberWord)
+            d.Time2ans = (d.Time2ans - min.Time2ans)/(max.Time2ans - min.Time2ans)
+            d.SucRate = (d.SucRate - min.SucRate)/(max.SucRate - min.SucRate)
+            temp2.push(d)
+        }
+        //console.log(temp2)
+
+        var averageNorm = {
+            Deviations: d3.mean(temp2,d => d.Deviations),
+            EmotionCount: d3.mean(temp2,d => d.EmotionCount),
+            NumberWord: d3.mean(temp2, d => d.NumberWord),
+            SucRate: d3.mean(temp2, d => d.SucRate),
+            Time2ans: d3.mean(temp2, d => d.Time2ans)
+        }
+
+        data.push(averageNorm);
+
 
         for (var i = 0; i < 2; ++i) {
-            data.push(x[i]);
+            data.push(temp2[i]);
         }
+        console.log(data)
 
-        //console.log(data)
+
+        for(var i = 1;i < data.length;++i){
+            var reverse = JSON.parse(JSON.stringify(data[i]));
+            reverse.Deviations = reverse.Deviations*(max.Deviations - min.Deviations)+min.Deviations
+            reverse.NumberWord = reverse.NumberWord*(max.NumberWord - min.NumberWord)+min.NumberWord
+            reverse.EmotionCount = reverse.EmotionCount*(max.EmotionCount - min.EmotionCount)+min.EmotionCount
+            reverse.SucRate = reverse.SucRate*(max.SucRate - min.SucRate)+min.SucRate
+            reverse.Time2ans = reverse.Time2ans*(max.Time2ans - min.Time2ans)+min.Time2ans
+            temp.push(reverse)
+        }
+        console.log(temp)
+
         features = Object.keys(data[0])
 
 
@@ -43,22 +119,18 @@
             .attr("width", 800)
             .attr("height", 800);
 
-
-
         //convert the scale from [0,1] to pixels
         let radialScale = d3.scaleLinear()
             .domain([0, 1])
             .range([0, 250]);
 
-
         let ticks = [0.2, 0.4, 0.6, 0.8, 1];
-
 
         //circles for the radar
         ticks.forEach(t =>
             svg.append("circle")
-                .attr("cx", 300)
-                .attr("cy", 300)
+                .attr("cx", 350)
+                .attr("cy", 350)
                 .attr("fill", "none")
                 .attr("stroke", "gray")
                 .attr("r", radialScale(t))
@@ -67,15 +139,15 @@
         //labels
         ticks.forEach(t =>
             svg.append("text")
-                .attr("x", 305)
-                .attr("y", 300 - radialScale(t))
+                .attr("x", 355)
+                .attr("y", 350 - radialScale(t))
                 .text(t.toString())
         );
 
         function angleToCoordinate(angle, value) {
             let x = Math.cos(angle) * radialScale(value);
             let y = Math.sin(angle) * radialScale(value);
-            return { "x": 300 + x, "y": 300 - y };
+            return { "x": 350 + x, "y": 350 - y };
         }
 
 
@@ -83,13 +155,25 @@
         for (var i = 0; i < features.length; i++) {
             let ft_name = features[i];
             let angle = (Math.PI / 2) + (2 * Math.PI * i / features.length);
-            let line_coordinate = angleToCoordinate(angle, 1);
-            let label_coordinate = angleToCoordinate(angle, 1.05);
+            var line_coordinate = 0;
+            var label_coordinate = 0;
+            if (features[i] === "EmotionCount") {
+                line_coordinate = angleToCoordinate(angle, 1);
+                label_coordinate = angleToCoordinate(angle, 1.35);
+            } else {
+                if (features[i] === "NumberWord") {
+                    line_coordinate = angleToCoordinate(angle, 1);
+                    label_coordinate = angleToCoordinate(angle, 1.2);
+                } else {
+                    line_coordinate = angleToCoordinate(angle, 1);
+                    label_coordinate = angleToCoordinate(angle, 1.05);
+                }
+            }
 
             //draw axis line
             svg.append("line")
-                .attr("x1", 300)
-                .attr("y1", 300)
+                .attr("x1", 350)
+                .attr("y1", 350)
                 .attr("x2", line_coordinate.x)
                 .attr("y2", line_coordinate.y)
                 .attr("stroke", "black");
@@ -121,6 +205,7 @@
         var g = svg.append("g")
             .attr("transform", "translate(" + 100 + "," + 100 + ")")
             .attr("html", "true");
+            
         let tooltips1 = [];
 
         for (var i = 0; i < features.length; i++) {
@@ -134,6 +219,7 @@
         for (var i = 0; i < data.length; i++) {
 
             let d = data[i];
+            let d2 = temp[i];
             let color = colors[i];
             let coordinates = getPathCoordinates(d);
 
@@ -155,17 +241,18 @@
                     d3.select(this)
                         .transition().duration(200)
                         .style("opacity", 0.8);
-                    da = d;
+                    da = d2;
+                    console.log(da)
                     for (var i = 0; i < features.length; i++) {
                         tooltips1[i]
-                            .attr('x', 420)
-                            .attr('y', 1 + (i * 20))
+                            .attr('x', 440)
+                            .attr('y', 1 + (i * 18))
                             .text(features[i] + " : " + Object.values(da)[i])
                             .transition().duration(200)
                             .style('opacity', 1);
                     }
-                    console.log(da.length);
-                    console.log(da);
+                    //console.log(da.length);
+                    //console.log(da);
 
                 })
                 .on('mouseout', function () {
