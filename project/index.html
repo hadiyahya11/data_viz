@@ -128,7 +128,8 @@
             .data(temp2)
             .enter()
             .append('option')
-            .text(function(d) { return "interaction ${i}"})
+            .text(function(d) { var i = temp2.indexOf(d);
+                return `interaction ${i+1}`})
             .attr("value",function(d){ return d;})
 
         //convert the scale from [0,1] to pixels
