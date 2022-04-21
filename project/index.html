@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 
+<select id="selectButton"></select>
+
 <body>
 </body>
 <script>
@@ -28,10 +30,9 @@
             d.NumberWord = +d.NumberWord;
             d.SucRate = +d.SucRate;
             d.Time2ans = +d.Time2ans;
-            //temp.push(d);
 
         });
-        //console.log(temp)
+
         var max = {
             Deviations: d3.max(x, d => d.Deviations),
             EmotionCount: d3.max(x, d => d.EmotionCount),
@@ -47,7 +48,7 @@
             SucRate: d3.min(x, d => d.SucRate),
             Time2ans: d3.min(x, d => d.Time2ans)
         }
-        //console.log(x[0])
+
         console.log(min)
         console.log(max)
 
@@ -95,9 +96,9 @@
         data.push(averageNorm);
 
 
-        for (var i = 0; i < 2; ++i) {
+       /* for (var i = 0; i < 2; ++i) {
             data.push(temp2[i]);
-        }
+        }*/
         console.log(data)
 
 
@@ -118,6 +119,17 @@
         let svg = d3.select("body").append("svg")
             .attr("width", 800)
             .attr("height", 800);
+
+            //var i = temp2.indexOf()
+
+            //options to the button
+            d3.select("#selectButton")
+            .selectAll('myOptions')
+            .data(temp2)
+            .enter()
+            .append('option')
+            .text(function(d) { return "interaction ${i}"})
+            .attr("value",function(d){ return d;})
 
         //convert the scale from [0,1] to pixels
         let radialScale = d3.scaleLinear()
@@ -189,6 +201,8 @@
         let line = d3.line()
             .x(d => d.x)
             .y(d => d.y);
+
+        
         let colors = ["darkorange", "gray", "navy"];
 
 
@@ -270,6 +284,35 @@
 
                 });
         }
+
+        //function that updates the chart
+        function update(selectedStudent){
+            /*const dataFilter = temp2.map(function(d){
+                return getPathCoordinates(d[selectedStudent]);
+            })*/
+            const dataFilter = data.push(temp2.map(function(d){
+                return getPathCoordinates(d[selectedStudent])
+            }))
+
+            //give teh new data to update the line
+            svg.datum(dataFilter)
+        .transition()
+        .duration(1000)
+        .attr("d",line)
+        .attr("stroke",color)
+        .attr("fill", color)
+
+        }
+
+        //When button is changed run the update function
+        d3.select("selectButton").on("change" , function(event,d){
+            //recover the option that has been chosen
+            const selectedOption = d3.select(this).property("value")
+            // run the update function with the selected option
+            update(selectedOption)
+        })
+
+      
 
     });
 
