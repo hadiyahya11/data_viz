@@ -1,13 +1,100 @@
 <!DOCTYPE html>
+<meta charset="utf-8">
+<style> /* set the CSS */
+
+body { font: 12px Arial;}
+
+</style>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 
-<select id="selectButton"></select>
 
 <body>
 </body>
 <script>
 
-    d3.csv("clean_data_out.csv").then(function (x) {
+ 
+
+    d3.csv("prototype.csv").then(function (x) {
+           // Set the dimensions of the canvas / graph
+var margin = {top: 30, right: 20, bottom: 30, left: 50},
+    width = 600 - margin.left - margin.right,
+    height = 270 - margin.top - margin.bottom;
+
+// Parse the date / time
+//var parseDate = d3.time.format("%d-%b-%y").parse;
+
+// Set the ranges
+var x1 = d3.scaleLinear().range([0, width]);
+var y1 = d3.scaleLinear().range([height, 0]);
+
+// Define the line
+/*var valueline = d3.line()
+    .x(function(d) { return x1(x.indexOf(d)); })
+    .y(function(d) { return y1(d.SucRate); });*/
+
+//overall svg
+let svg = d3.select("body")
+            .append("svg")
+            .attr("width", 1400)
+            .attr("height", 1000)
+            .attr("id","mainsvg");
+
+
+
+    
+// Adds the svg canvas
+var svg2 = d3.select("svg#mainsvg")
+    .append("svg")
+    .append("g")
+    .attr("id","pointplot")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .attr("transform", 
+              "translate(" + 750 + "," + margin.top + ")")
+              .attr("html", "true");
+
+
+
+              var svg3 = d3.select("svg#mainsvg")
+        .append("g") //group to move svgsideways
+        .append("svg")
+        .attr("id","spiderchart");
+
+
+
+         //convert strings into numbers
+         x.forEach(function (d) {
+            d.Deviations = +d.Deviations;
+            d.EmotionCount = +d.EmotionCount;
+            d.NumberWord = +d.NumberWord;
+            d.SucRate = +d.SucRate;
+            d.Time2ans = +d.Time2ans;
+
+        });
+
+
+        // Scale the range of the data
+    x1.domain(d3.extent(x, function(d) { return x.indexOf(d); }));
+    y1.domain([0, d3.max(x, function(d) { return d.SucRate; })]);
+
+
+    // Add the scatterplot
+    svg2.selectAll("dot")
+        .data(x)
+      .enter().append("circle")
+        .attr("r", 3.5)
+        .attr("cx", function(d) { return x1(x.indexOf(d)); })
+        .attr("cy", function(d) { return y1(d.SucRate); });
+
+   // Add the X Axis
+  svg2.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x1));
+
+  // Add the Y Axis
+  svg2.append("g")
+      .call(d3.axisLeft(y1));
+
 
         //array that holds the normalized dataset
         var data = [];
@@ -23,16 +110,7 @@
         var length = x.length
         console.log(length)
 
-        //convert strings into numbers
-        x.forEach(function (d) {
-            d.Deviations = +d.Deviations;
-            d.EmotionCount = +d.EmotionCount;
-            d.NumberWord = +d.NumberWord;
-            d.SucRate = +d.SucRate;
-            d.Time2ans = +d.Time2ans;
-
-        });
-
+    
         var max = {
             Deviations: d3.max(x, d => d.Deviations),
             EmotionCount: d3.max(x, d => d.EmotionCount),
@@ -92,13 +170,9 @@
             SucRate: d3.mean(temp2, d => d.SucRate),
             Time2ans: d3.mean(temp2, d => d.Time2ans)
         }
-
+        temp2.unshift(averageNorm)
         data.push(averageNorm);
 
-
-       /* for (var i = 0; i < 2; ++i) {
-            data.push(temp2[i]);
-        }*/
         console.log(data)
 
 
@@ -116,22 +190,6 @@
         features = Object.keys(data[0])
 
 
-        let svg = d3.select("body").append("svg")
-            .attr("width", 800)
-            .attr("height", 800);
-
-            //var i = temp2.indexOf()
-
-            //options to the button
-            d3.select("#selectButton")
-            .selectAll('myOptions')
-            .data(temp2)
-            .enter()
-            .append('option')
-            .text(function(d) { var i = temp2.indexOf(d);
-                return `interaction ${i+1}`})
-            .attr("value",function(d){ return d;})
-
         //convert the scale from [0,1] to pixels
         let radialScale = d3.scaleLinear()
             .domain([0, 1])
@@ -141,7 +199,7 @@
 
         //circles for the radar
         ticks.forEach(t =>
-            svg.append("circle")
+            svg3.append("circle")
                 .attr("cx", 350)
                 .attr("cy", 350)
                 .attr("fill", "none")
@@ -151,7 +209,7 @@
 
         //labels
         ticks.forEach(t =>
-            svg.append("text")
+            svg3.append("text")
                 .attr("x", 355)
                 .attr("y", 350 - radialScale(t))
                 .text(t.toString())
@@ -184,7 +242,7 @@
             }
 
             //draw axis line
-            svg.append("line")
+            svg3.append("line")
                 .attr("x1", 350)
                 .attr("y1", 350)
                 .attr("x2", line_coordinate.x)
@@ -192,7 +250,7 @@
                 .attr("stroke", "black");
 
             //draw axis label
-            svg.append("text")
+            svg3.append("text")
                 .attr("x", label_coordinate.x)
                 .attr("y", label_coordinate.y)
                 .text(ft_name);
@@ -217,7 +275,21 @@
             return coordinates;
         }
 
-        var g = svg.append("g")
+        //options to the button
+       /* d3.select("#selectButton")
+            .selectAll('myOptions')
+            .data(temp2)
+            .enter()
+            .append('option')
+            .text(function(d) { var i = temp2.indexOf(d);
+                return `interaction ${i+1}`})
+            .attr("value",function(d){ return getPathCoordinates(d);})
+            .attr("x",0)
+            .attr("y",0)*/
+
+        
+
+        var g = svg3.append("g")
             .attr("transform", "translate(" + 100 + "," + 100 + ")")
             .attr("html", "true");
             
@@ -239,7 +311,7 @@
             let coordinates = getPathCoordinates(d);
 
             //draw the path element
-            svg.append("path")
+            svg3.append("path")
                 .datum(coordinates)
                 .attr("d", line)
                 .attr("stroke-width", 3)
@@ -284,36 +356,7 @@
                     }
 
                 });
-        }
-
-        //function that updates the chart
-        function update(selectedStudent){
-            /*const dataFilter = temp2.map(function(d){
-                return getPathCoordinates(d[selectedStudent]);
-            })*/
-            const dataFilter = data.push(temp2.map(function(d){
-                return getPathCoordinates(d[selectedStudent])
-            }))
-
-            //give teh new data to update the line
-            svg.datum(dataFilter)
-        .transition()
-        .duration(1000)
-        .attr("d",line)
-        .attr("stroke",color)
-        .attr("fill", color)
-
-        }
-
-        //When button is changed run the update function
-        d3.select("selectButton").on("change" , function(event,d){
-            //recover the option that has been chosen
-            const selectedOption = d3.select(this).property("value")
-            // run the update function with the selected option
-            update(selectedOption)
-        })
-
-      
+        }  
 
     });
 
