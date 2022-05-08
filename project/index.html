@@ -9,11 +9,11 @@
 </style>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 
+<button id="button" >Hide mean</button>
 
 <body>
 </body>
 <script>
-
 
 
     d3.csv("prototype.csv").then(function (x) {
@@ -117,11 +117,11 @@
 
         //compute average
         var average = {
-            Deviations: d3.mean(x, d => d.Deviations).toFixed(5),
-            EmotionCount: d3.mean(x, d => d.EmotionCount).toFixed(5),
-            NumberWord: d3.mean(x, d => d.NumberWord).toFixed(5),
-            SucRate: d3.mean(x, d => d.SucRate).toFixed(5),
-            Time2ans: d3.mean(x, d => d.Time2ans).toFixed(5)
+            Deviations: d3.mean(x, d => d.Deviations).toFixed(2),
+            EmotionCount: d3.mean(x, d => d.EmotionCount).toFixed(2),
+            NumberWord: d3.mean(x, d => d.NumberWord).toFixed(2),
+            SucRate: d3.mean(x, d => d.SucRate).toFixed(2),
+            Time2ans: d3.mean(x, d => d.Time2ans).toFixed(2)
         }
         temp.push(average)
         console.log(temp)
@@ -139,14 +139,8 @@
 
         for (var i = 0; i < length; ++i) {
             var d = JSON.parse(JSON.stringify(x[i]))
-            // d.Deviations = (d.Deviations - min.Deviations) / (max.Deviations - min.Deviations)
-            // d.EmotionCount = (d.EmotionCount - min.EmotionCount) / (max.EmotionCount - min.EmotionCount)
-            // d.NumberWord = (d.NumberWord - min.NumberWord) / (max.NumberWord - min.NumberWord)
-            // d.Time2ans = (d.Time2ans - min.Time2ans) / (max.Time2ans - min.Time2ans)
-            // d.SucRate = (d.SucRate - min.SucRate) / (max.SucRate - min.SucRate)
             temp2.push(min_max(d))
         }
-        //console.log(temp2)
 
         var averageNorm = {
             Deviations: d3.mean(temp2, d => d.Deviations),
@@ -186,9 +180,9 @@
 
         var color4 = d3.scaleOrdinal().domain(x).range(d3.schemePaired);
         const areaZone="areaZone";
-     //   var k=0;
+
         var indexList=[];
-     //   let h;
+
 
         // Add the scatterplot
         svg2.selectAll("dot")
@@ -216,12 +210,10 @@
                 var d= min_max(i1);
                
                if(!indexList.includes(index.get(this))){
-              //  console.log("not exist"); 
-                //data.push(d);
+
                 indexList.push(index.get(this));
                 let coordinates = getPathCoordinates(d);
                 
-                //data.push(d);
 
                 svg3.append("path")
                     .datum(coordinates)
@@ -231,7 +223,7 @@
                     .attr("stroke", function(d,i){return ind;})
                     .attr("fill", function(d,i){ return ind;})
                     .attr("stroke-opacity", 1)
-                    .attr("opacity", 0.35)
+                    .attr("opacity", 0.5)
                     .on('mouseover', function (da, i) {
                     //Dim all blobs
                     d3.selectAll(".radarArea")
@@ -251,8 +243,6 @@
                             .transition().duration(200)
                             .style('opacity', 1);
                     }
-                    //console.log(da.length);
-                    //console.log(da);
 
                 })
                 .on('mouseout', function () {
@@ -270,54 +260,16 @@
 
                 });
                     
-
-
-
-
-
-
-
-
-
-
-
-
                }
                else{
                 d3.select("#areaZone"+index.get(this)).style("opacity", 0.35).attr("pointer-events","all");
-
-                //console.log("exist"); 
                 
                }
                 
-
-             //   var pt = min_max(i);
-             //   data=[];
-              //  data.push(pt);
-             //   temp.push(pt);
-
-                // var something  = d3.selectAll(".spiderchart").data(data)
-                // something.enter().append();
-
-             /*   path.attr("d",data);
-                path.enter().append();
-                path.datum(getPathCoordinates(pt))
-                .attr("d", line)
-                .attr("stroke-width", 3)
-                .attr("stroke", function(d,i){return ind;})
-                .attr("fill", function(d,i){ return ind;})
-                .attr("stroke-opacity", 1)
-                .attr("opacity", 0.5)*/
                 } else {
                     d3.select(this).attr("r",3.5).attr("fill","000000");
-                  //  path.exit().remove();
-                  
-                  //  var areaZonev=areaZone+index.get(this);
-                 //   console.log(areaZonev); 
-                 // var active   = areaZonev.active ? false : true,
-		         //    newOpacity = active ? 0 : 1;
+         
                        d3.select("#areaZone"+index.get(this)).style("opacity", 0).attr("pointer-events","none");
-                 //      areaZonev.active=active;
 
    
                 }
@@ -460,6 +412,7 @@
             //draw the path element
             var path = svg3.append("path")
                 .datum(coordinates)
+                .attr("id","mean")
                 .attr("d", line)
                 .attr("stroke-width", 3)
                 .attr("stroke", color)
@@ -504,8 +457,29 @@
 
                 });
         }
+        var opacity = d3.select("#mean").attr("opacity");
+        var text = "Hide mean";
+        d3.select("#button")
+             .on("click",function(){
+                console.log(opacity);
+                    if(opacity!=0){
+                        d3.select("#mean").style("opacity",0).attr("pointer-events","none");
+                        opacity = 0;
+                        text = "Show mean";
+                        //console.log(text);
+                        
+                    }else{
+                        d3.select("#mean").style("opacity",0.5).attr("pointer-events","all");
+                        opacity = 0.5;
+                        text = "Hide mean";
+                    }
+             d3.select("#button").text(text)
+                    
+             });
 
     });
+
+    
 
 
 
