@@ -86,6 +86,8 @@
 
         });
 
+        features = Object.keys(x[0])
+
 
         // Scale the range of the data
         x1.domain(d3.extent(x, function (d) { return x.indexOf(d); }));
@@ -164,6 +166,17 @@
             return 
         }
 
+        //should be called after doing min_max on the data point
+        function invert_scale(d,feature){
+            //var res = JSON.parse(JSON.stringify(d));
+            //console.log(d[feature])
+          //  console.log(d);
+          var temp = 1 - d[feature]
+            d[feature] = temp;
+           // console.log(d[feature])
+          //  return d;
+        }
+
 
         for (var i = 1; i < data.length; ++i) {
             var reverse = JSON.parse(JSON.stringify(data[i]));
@@ -172,7 +185,7 @@
         }
         console.log(temp)
 
-        features = Object.keys(data[0])
+        
 
         let line = d3.line()
             .x(d => d.x)
@@ -198,7 +211,8 @@
 
                 var areaZonev=areaZone+index.get(this);
                 
-                
+                var d= min_max(i1);
+                console.log(d.Time2ans)
 
                 if(d3.select(this).attr("r")==3.5){
                     var ind = 0;
@@ -207,7 +221,10 @@
                 return ind;})
                 .attr("r",7);
 
-                var d= min_max(i1);
+
+                data.push(d);
+               // console.log(data)
+               
                
                if(!indexList.includes(index.get(this))){
 
@@ -218,6 +235,7 @@
                 svg3.append("path")
                     .datum(coordinates)
                     .attr("id", "areaZone"+index.get(this))
+                    .attr("class","vol")
                     .attr("d",line)
                     .attr("stroke-width", 3)
                     .attr("stroke", function(d,i){return ind;})
@@ -268,13 +286,24 @@
                 
                 } else {
                     d3.select(this).attr("r",3.5).attr("fill","000000");
+
+                    for(var i = 0;i<data.length;++i){
+                        if(data[i].Deviations===d.Deviations && data[i].NumberWord===d.NumberWord && data[i].SucRate===d.SucRate 
+                                    && data[i].EmotionCount===d.EmotionCount && data[i].Time2ans === d.Time2ans){
+                            console.log("dkhol"+ i)
+                            data.splice(i,1);
+                            //console.log(data);
+                        }
+                    }
+
+                   // console.log(data)
          
                        d3.select("#areaZone"+index.get(this)).style("opacity", 0).attr("pointer-events","none");
 
    
                 }
 
-
+                //console.log( d3.selectAll('.vol').datum().length);
 
               
                
@@ -370,7 +399,71 @@
             svg3.append("text")
                 .attr("x", label_coordinate.x)
                 .attr("y", label_coordinate.y)
-                .text(ft_name);
+                .text(ft_name)
+                .on("click",function(){
+                    var coo = []
+                    var new_coordinates = []
+                    //var old_coordinates = []
+                    for(var i = 0 ;i<data.length;++i){
+                        var tempo = getPathCoordinates(data[i]);
+                        for(var k=0;k<tempo.length;++k){
+                            coo.push(tempo[k])
+                        }
+                           
+                    }
+                    d3.selectAll('.vol').each(function(d,i){
+                        
+                        //console.log(coo)
+                        var selection = d
+                        console.log(selection.length)
+                        //console.log(coo)
+                        console.log(coo.length);
+
+                        for(var j =0; j<coo.length;j=j+selection.length){
+                            //each data point has 5 coordinates for path so check if the first 5 consecutive coordatinates equal the selection
+                            var cond = true;
+                            for(var i=0;i <selection.length;++i){
+                                if(coo[i+j].x != selection[i].x || coo[i+j].y != selection[i].y){
+                                    cond = false;
+                                }
+                            }
+                            if(cond){
+                                console.log(j)
+                                console.log(j%4)
+                                //var old_coordinates = getPathCoordinates(data[j%4])
+                                invert_scale(data[j%4],ft_name);
+                                var temp = data[j%4];
+                                new_coordinates = getPathCoordinates(temp);
+                                for(var i=0;i<new_coordinates.length;++i){
+                                    coo[j+i]=new_coordinates[i];
+                                }
+                                console.log(new_coordinates)
+                            //  var cond2 = true;
+                        //for(var i=0;i <selection.length;++i){
+                        //        // console.log(coo[i])
+                        //        // console.log(selection[i])
+                        //         if(old_coordinates[i].x == selection[i].x && old_coordinates[i].y == selection[i].y){
+                        //             //console.log("dkholt")
+                        //             cond2 = cond2 && true;
+                        //         }else{
+                        //             cond2 = false
+                        //         }
+                        //     }
+                        // console.log(cond2)
+                        // if(cond2){
+                        //     d3.select(this).datum(new_coordinates).attr("d",line);
+                        // }
+                             d3.select(this).datum(new_coordinates).attr("d",line)
+                            }
+                            
+                       
+                        }
+                    
+                       
+                        
+                    });
+                    //d3.selectAll(".vol").dat(coo).attr("d",line)
+                });
         }
 
 
@@ -413,6 +506,7 @@
             var path = svg3.append("path")
                 .datum(coordinates)
                 .attr("id","mean")
+                .attr("class","vol")
                 .attr("d", line)
                 .attr("stroke-width", 3)
                 .attr("stroke", color)
