@@ -49,6 +49,11 @@
         var x1 = d3.scaleLinear().range([0, width]);
         var y1 = d3.scaleLinear().range([height, 0]);
 
+        var x_bar = d3.scaleBand().range([0, width]).padding(0.1);
+        var y_bar = d3.scaleLinear().range([height, 0]);
+
+
+
         //overall svg
         let svg = d3.select("body")
             .append("svg")
@@ -74,27 +79,56 @@
             .append("svg")
             .attr("id", "spiderchart");
 
+        var svg4 = d3.select("svg#mainsvg").append("svg")
+                    .append("g")
+                    .attr("width" , width + margin.left + margin.right)
+                    .attr("height" , height + margin.top + margin.bottom)
+                    .attr("transform", "translate ("+ 750 + ","+ 400 + ")")
+                    .attr("id","barplot");
+        
+
+        x_bar.domain(x.map(function(d){ return x.indexOf(d); }));
+        y_bar.domain([0,d3.max(x,function(d){ return d.SucRate; })]);
+
+        svg4.selectAll(".bar")
+            .data(x)
+            .enter().append("rect")
+            .attr("class","bar")
+            .attr("x",function(d){ return x_bar(x.indexOf(d)); })
+            .attr("width" , x_bar.bandwidth())
+            .attr("y",function(d){ return y_bar(d.SucRate); })
+            .attr("height", function(d){ return height - y_bar(d.SucRate)});
 
 
-        //convert strings into numbers
-        x.forEach(function (d) {
-            d.Deviations = +d.Deviations;
-            d.EmotionCount = +d.EmotionCount;
-            d.NumberWord = +d.NumberWord;
-            d.SucRate = +d.SucRate;
-            d.Time2ans = +d.Time2ans;
+        svg4.append("g")
+        .attr("transform", "translate(0,"+ height+")")
+        .call(d3.axisBottom(x_bar));
 
-        });
+        svg4.append("g")
+            .call(d3.axisLeft(y_bar));
 
         features = Object.keys(x[0])
 
+        //convert strings into numbers
+        x.forEach(function (d) {
+            for(var i =0;i<features.length;++i){
+                var ft = features[i]
+                d[ft] = +d[ft];
+            }
+        });
 
         // Scale the range of the data
-        x1.domain(d3.extent(x, function (d) { return x.indexOf(d); }));
+       // x1.domain(d3.extent(x, function (d) { return x.indexOf(d); }));
+        x1.domain([0,x.length]);
         y1.domain([0, d3.max(x, function (d) { return d.SucRate; })]);
 
         var length = x.length
+
+
        
+        // var max2= {
+        //     (features[i]).toString: d3.max(x,d=>d[features[i]])
+        // }
 
         var max = {
             Deviations: d3.max(x, d => d.Deviations),
@@ -212,7 +246,7 @@
                 var areaZonev=areaZone+index.get(this);
                 
                 var d= min_max(i1);
-                console.log(d.Time2ans)
+                //console.log(d.Time2ans)
 
                 if(d3.select(this).attr("r")==3.5){
                     var ind = 0;
@@ -401,6 +435,7 @@
                 .attr("y", label_coordinate.y)
                 .text(ft_name)
                 .on("click",function(){
+                    d3.select(this).text("1-"+ft_name);
                     var coo = []
                     var new_coordinates = []
                     //var old_coordinates = []
